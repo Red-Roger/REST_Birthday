@@ -7,8 +7,11 @@ from sqlalchemy.sql import extract, expression, or_
 from src.db.models import Contact
 from src.schemas import ContactModel, ContactResponse, UpdateModel
 from datetime import datetime, timedelta, date
+from src.routes import auth
+
 app = FastAPI()
 
+app.include_router(auth.router, prefix='/api')
 
 @app.get("/api/healthchecker")
 def healthchecker(db: Session = Depends(get_db)):
