@@ -29,6 +29,17 @@ async def signup(body: UserModel, background_tasks: BackgroundTasks, request: Re
     background_tasks.add_task(send_email, new_user.email, new_user.username, request.base_url)
     return {"user": new_user, "detail": "User successfully created. Check your email for confirmation."}
 
+    """
+    User signup.
+    :param body: The data for the user to signup.
+    :type body: UserModel
+    :param background_tasks: BackgroundTasks.
+    :type background_tasks:  BackgroundTasks
+    :param db: The database session.
+    :type db: Session
+    :return: new user with comments.
+    :rtype: Dict | None
+    """
 
 @router.post("/login", response_model=TokenModel)
 async def login(body: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
@@ -45,6 +56,15 @@ async def login(body: OAuth2PasswordRequestForm = Depends(), db: Session = Depen
     await repository_users.update_token(user, refresh_token, db)
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
+    """
+    User login.
+    :param body: The data for the user to login.
+    :type body:  OAuth2PasswordRequestForm
+    :param db: The database session.
+    :type db: Session
+    :return: tokens.
+    :rtype: Dict | None
+    """
 
 @router.get('/confirmed_email/{token}')
 async def confirmed_email(token: str, db: Session = Depends(get_db)):
@@ -57,6 +77,15 @@ async def confirmed_email(token: str, db: Session = Depends(get_db)):
     await repository_users.confirmed_email(email, db)
     return {"message": "Email confirmed"}
 
+    """
+    Email confirmation.
+    :param token: token.
+    :type token: str
+    :param db: The database session.
+    :type db: Session
+    :return: message.
+    :rtype: Dict | None
+    """
 
 @router.post('/request_email')
 async def request_email(body: RequestEmail, background_tasks: BackgroundTasks, request: Request,
@@ -69,6 +98,19 @@ async def request_email(body: RequestEmail, background_tasks: BackgroundTasks, r
         background_tasks.add_task(send_email, user.email, user.username, request.base_url)
     return {"message": "Check your email for confirmation."}
 
+    """
+    Email request.
+    :param body: The data for email request.
+    :type body: RequestEmail
+    :param background_tasks: BackgroundTasks.
+    :type background_tasks:  BackgroundTasks
+    :param request: request.
+    :type request: Request    
+    :param db: The database session.
+    :type db: Session
+    :return: Message.
+    :rtype: Dict
+    """
 
 @router.get('/refresh_token', response_model=TokenModel)
 async def refresh_token(credentials: HTTPAuthorizationCredentials = Security(security), db: Session = Depends(get_db)):
@@ -83,6 +125,16 @@ async def refresh_token(credentials: HTTPAuthorizationCredentials = Security(sec
     refresh_token = await auth_service.create_refresh_token(data={"sub": email})
     await repository_users.update_token(user, refresh_token, db)
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+
+    """
+    Token refresh.
+    :param credentials: token.
+    :type credentials: HTTPAuthorizationCredentials
+    :param db: The database session.
+    :type db: Session
+    :return: message.
+    :rtype: Dict | None
+    """
 
 
 async def get_email_from_token(self, token: str):
