@@ -1,10 +1,11 @@
 import unittest
 from unittest.mock import MagicMock
 
+from libgravatar import Gravatar
 from sqlalchemy.sql import extract, expression, or_
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, date
-from src.schemas import ContactModel, ContactResponse, UpdateModel
+from src.schemas import ContactModel, ContactResponse, UpdateModel, UserModel
 
 from src.db.models import Contact, User
 from src.schemas import UserDb, UserResponse, TokenModel, RequestEmail
@@ -20,12 +21,28 @@ from main import (
     update_contact,
 )
 
+from src.repository.users import (
+    get_user_by_email,
+)
+
+
 
 class TestQuotes(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self):
         self.session = MagicMock(spec=Session)
         self.user = User(id=1)
+
+    async def test_get_user_by_email(self):
+        user_auth = self.session.query(User).filter(User.email == self.user.email).first()
+        result = await get_user_by_email(email=self.user.email, db=self.session)
+        self.assertEqual(result, user_auth)
+
+
+    async def test_get_contacts(self):
+        contacts = self.session.query(Contact).filter(Contact.user_id == self.user.id)
+        result = await get_contacts(current_user=self.user, db=self.session)
+        self.assertEqual(result, contacts)
 
 
     async def test_get_contact(self):
@@ -54,6 +71,26 @@ class TestQuotes(unittest.IsolatedAsyncioTestCase):
         self.session.query().filter_by(email="ivanoff@example.com", user_id=1).first.return_value = contact
         result = await get_contact_by_emal(eml="ivanoff@example.com", current_user=self.user, db=self.session)
         self.assertEqual(result, contact)
+
+
+    async def test_get_birthdays(self):
+
+        today_doy = datetime.today().timetuple().tm_yday 
+        days_per_year, leap_delta = (366, 1) if datetime.now().year%4 == 0 and datetime.now().year%400 == 0 else (365, 0)
+        start_doy = today_doy + leap_delta
+        next_doy = today_doy + 7
+
+        if next_doy > days_per_year :
+            start_doy = leap_delta
+            next_doy -= days_per_year
+
+
+        contacts = self.session.query(Contact).filter(or_(
+        expression.between(extract('doy', Contact.birthday), start_doy, next_doy-1),
+        expression.between(extract('doy', Contact.birthday), today_doy, today_doy+6),
+        )).all()
+        result = await get_birthdays(current_user=self.user, db=self.session)
+        self.assertEqual(result, contacts)
 
 
     async def test_create_contact(self):
@@ -88,13 +125,6 @@ class TestQuotes(unittest.IsolatedAsyncioTestCase):
 
 
 """
- 
-    async def test_get_contacts(self):
-        contacts = [Contact(), Contact(), Contact()]
-        self.session.query(Contact).all == contacts
-        result = await get_contacts(current_user=self.user, db=self.session)
-        self.assertEqual(result, contacts)
-
         
 
     async def test_get_birthdays(self):
