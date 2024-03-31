@@ -47,10 +47,10 @@ def healthchecker(db: Session = Depends(get_db)):
 
 @app.get("/contacts", response_model = List[ContactResponse], tags = ['contacts'])
 async def get_contacts(current_user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
-    contacts = db.query(Contact).filter(Contact.user_id == current_user.id)
-    return contacts
+
     """
     Retrieves a list of all contacts from the database.
+
     :param current_user: curently logged user.
     :type current_user: User
     :param db: The database session.
@@ -58,86 +58,111 @@ async def get_contacts(current_user: User = Depends(auth_service.get_current_use
     :return: A list of contacts.
     :rtype: Query
     """
+    contacts = db.query(Contact).filter(Contact.user_id == current_user.id)
+    return contacts
+
 
 @app.get("/contacts/{contact_id}", response_model = ContactResponse, tags = ['contacts'])
 async def get_contact(contact_id: int = Path(ge = 1), current_user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
-    contact = db.query(Contact).filter_by(id=contact_id, user_id = current_user.id).first()
-    if contact is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
-    return contact
 
     """
     Retrieves a contact by given id from the database.
+
     :param contact_id: contact id to look for.
     :type contact_id: int
     :param current_user: curently logged user.
     :type current_user: User
     :param db: The database session.
     :type db: Session
-    :return: A list of contacts.
+    :return: Contact.
     :rtype: Contact | None
     """
 
-@app.get("/contacts/name/{nm}", response_model = ContactResponse, tags = ['contacts'])
-async def get_contact_by_name(nm: str = Path(),  current_user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
-    contact = db.query(Contact).filter_by(name=nm, user_id = current_user.id).first()
+    contact = db.query(Contact).filter_by(id=contact_id, user_id = current_user.id).first()
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     return contact
 
+
+@app.get("/contacts/name/{nm}", response_model = ContactResponse, tags = ['contacts'])
+async def get_contact_by_name(nm: str = Path(),  current_user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
+    
     """
     Retrieves a contact by given name from the database.
+
     :param nm: contact name to look for.
     :type nm: str
     :param current_user: curently logged user.
     :type current_user: User
     :param db: The database session.
     :type db: Session
-    :return: A list of contacts.
+    :return: Contact.
     :rtype: Contact | None
     """
-
-@app.get("/contacts/lastname/{l_name}", response_model = ContactResponse, tags = ['contacts'])
-async def get_contact_by_lastname(l_name: str = Path(), current_user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
-    contact = db.query(Contact).filter_by(lastname=l_name, user_id = current_user.id).first()
+    contact = db.query(Contact).filter_by(name=nm, user_id = current_user.id).first()
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     return contact
 
+@app.get("/contacts/lastname/{l_name}", response_model = ContactResponse, tags = ['contacts'])
+async def get_contact_by_lastname(l_name: str = Path(), current_user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
+    
     """
     Retrieves a contact by given last name from the database.
+
     :param l_name: contact last name to look for.
     :type l_name: str
     :param current_user: curently logged user.
     :type current_user: User
     :param db: The database session.
     :type db: Session
-    :return: A list of contacts.
+    :return: Contact.
     :rtype: Contact | None
     """
-
-@app.get("/contacts/email/{eml}", response_model = ContactResponse, tags = ['contacts'])
-async def get_contact_by_emal(eml: str = Path(), current_user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
-    contact = db.query(Contact).filter_by(email=eml, user_id = current_user.id).first()
+    contact = db.query(Contact).filter_by(lastname=l_name, user_id = current_user.id).first()
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     return contact
 
+
+@app.get("/contacts/email/{eml}", response_model = ContactResponse, tags = ['contacts'])
+async def get_contact_by_emal(eml: str = Path(), current_user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
+
     """
     Retrieves a contact by given email from the database.
+
     :param eml: contact last name to look for.
     :type eml: str
     :param current_user: curently logged user.
     :type current_user: User
     :param db: The database session.
     :type db: Session
-    :return: A list of contacts.
+    :return: Contact.
     :rtype: Contact | None
     """
+
+    contact = db.query(Contact).filter_by(email=eml, user_id = current_user.id).first()
+    if contact is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    return contact
+
 
 @app.get("/birthdays", response_model = List[ContactResponse], tags = ['contacts'])
 async def get_birthdays(current_user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
     
+    """
+    Retrieves contacts which birthday is within 7 days.
+
+    :param eml: contact last name to look for.
+    :type current_user: str
+    :param current_user: curently logged user.
+    :type current_user: User
+    :param db: The database session.
+    :type db: Session
+    :return: Contacts.
+    :rtype: Query
+    """
+
     today_doy = datetime.today().timetuple().tm_yday 
     days_per_year, leap_delta = (366, 1) if datetime.now().year%4 == 0 and datetime.now().year%400 == 0 else (365, 0)
     start_doy = today_doy + leap_delta
@@ -153,31 +178,13 @@ async def get_birthdays(current_user: User = Depends(auth_service.get_current_us
         )).all()
     return contacts
 
-    """
-    Retrieves contacts which birthday is within 7 days.
-    :param eml: contact last name to look for.
-    :type current_user: str
-    :param current_user: curently logged user.
-    :type current_user: User
-    :param db: The database session.
-    :type db: Session
-    :return: A list of contacts.
-    :rtype: Query
-    """
-
 
 @app.post("/contacts", response_model = ContactResponse, tags = ['contacts'])
 async def create_contact(body: ContactModel, current_user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
-    contact = Contact (name = body.name, lastname = body.lastname, email = body.email,
-                       phone = body.phone, birthday = body.birthday, additional = body.additional, user = current_user)
-    contact.contact_date = datetime.now()
-    db.add(contact)
-    db.commit()
-    db.refresh(contact)
-    return contact
 
     """
     Add contact to database.
+
     :param body: The data for the contact to create.
     :type body: ContactModel
     :param current_user: curently logged user.
@@ -187,9 +194,31 @@ async def create_contact(body: ContactModel, current_user: User = Depends(auth_s
     :return: A list of contacts.
     :rtype: Contact
     """
+    contact = Contact (name = body.name, lastname = body.lastname, email = body.email,
+                       phone = body.phone, birthday = body.birthday, additional = body.additional, user = current_user)
+    contact.contact_date = datetime.now()
+    db.add(contact)
+    db.commit()
+    db.refresh(contact)
+    return contact
+
 
 @app.delete("/contacts/{cont_id}", status_code=status.HTTP_204_NO_CONTENT, tags = ['contacts'])
 async def remove_contact(cont_id: int = Path(ge = 1), current_user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
+    
+    """
+    Delete contact from database.
+
+    :param cont_id: contact id to delete.
+    :type cont_id: int
+    :param current_user: curently logged user.
+    :type current_user: User
+    :param db: The database session.
+    :type db: Session
+    :return: Contact.
+    :rtype: Contact
+    """
+
     contact = db.query(Contact).filter_by(id=cont_id, user_id = current_user.id).first()
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
@@ -197,20 +226,25 @@ async def remove_contact(cont_id: int = Path(ge = 1), current_user: User = Depen
     db.commit()
     return contact
 
+
+@app.patch("/contacts/{cont_id}/update", response_model = UpdateModel, tags = ['contacts'])
+async def update_contact(body: UpdateModel, cont_id: int = Path(ge = 1), current_user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
+    
     """
-    Delete contact from database.
-    :param cont_id: contact id to delete.
+    Update user data.
+
+    :param body: The data for the contact to update.
+    :type body: UpdateModel
+    :param cont_id: contact id to update.
     :type cont_id: int
     :param current_user: curently logged user.
     :type current_user: User
     :param db: The database session.
     :type db: Session
-    :return: A list of contacts.
+    :return: Contact.
     :rtype: Contact
     """
 
-@app.patch("/contacts/{cont_id}/update", response_model = UpdateModel, tags = ['contacts'])
-async def update_contact(body: UpdateModel, cont_id: int = Path(ge = 1), current_user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
     contact = db.query(Contact).filter_by(id=cont_id, user_id = current_user.id).first()
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
@@ -220,17 +254,3 @@ async def update_contact(body: UpdateModel, cont_id: int = Path(ge = 1), current
     contact.contact_date = datetime.now()
     db.commit()
     return contact
-
-    """
-    Update user data.
-    :param body: The data for the contact to update.
-    :type body: UpdateModel
-    :param cont_id: contact id to update.
-    :type cont_id: int
-    :param current_user: curently logged user.
-    :type current_user: User
-    :param db: The database session.
-    :type db: Session
-    :return: A list of contacts.
-    :rtype: Contact
-    """

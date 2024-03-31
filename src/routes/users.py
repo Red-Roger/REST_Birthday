@@ -21,6 +21,20 @@ async def read_users_me(current_user: User = Depends(auth_service.get_current_us
 @router.patch('/avatar', response_model=UserDb)
 async def update_avatar_user(file: UploadFile = File(), current_user: User = Depends(auth_service.get_current_user),
                              db: Session = Depends(get_db)):
+    
+    """
+    Avatar changing.
+
+    :param file: avtar pic.
+    :type file: UploadFile   
+    :param db: The database session.
+    :type db: Session
+    :param current_user: curently logged user.
+    :type current_user: User
+    :return: user.
+    :rtype: User
+    """
+
     cloudinary.config(
         cloud_name=settings.cloudinary_name,
         api_key=settings.cloudinary_api_key,
